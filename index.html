@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaland · Játék · Kockázat — Titán</title>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --parchment: #f0e6c8;
+    --parchment-dark: #d4c49a;
+    --parchment-darker: #b8a070;
+    --blood: #7a1a1a;
+    --blood-bright: #c0392b;
+    --gold: #b8862a;
+    --gold-light: #d4a843;
+    --shadow: rgba(0,0,0,0.6);
+    --emerald: #1a4a2a;
+    --copper: #8b4513;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0a05;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, #1a0f05 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, #0a0d05 0%, transparent 60%);
+    font-family: 'Crimson Text', Georgia, serif;
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCREEN SYSTEM */
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* PARCHMENT PANELS */
+  .parchment {
+    background: var(--parchment);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend mode='multiply' in='SourceGraphic'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E"),
+      linear-gradient(135deg, #f5e9c5 0%, #e8d9a8 40%, #f2e4bb 70%, #ead5a0 100%);
+    border: 3px solid var(--parchment-darker);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.15), 0 4px 20px var(--shadow);
+    position: relative;
+  }
+
+  .parchment::before {
+    content: '';
+    position: absolute; inset: 6px;
+    border: 1px solid var(--parchment-dark);
+    pointer-events: none;
+  }
+
+  /* TITLE SCREEN */
+  #screen-title {
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .title-container {
+    max-width: 700px;
+    width: 100%;
+    padding: 50px 60px;
+    text-align: center;
+    border-radius: 2px;
+  }
+
+  .title-emblem {
+    font-size: 60px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  }
+
+  h1.game-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 3.2rem;
+    color: var(--blood);
+    text-shadow: 2px 2px 0 var(--parchment-dark), 4px 4px 8px rgba(0,0,0,0.3);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .title-dots {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    letter-spacing: 0.4em;
+    margin-bottom: 4px;
+  }
+
+  h2.game-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--copper);
+    margin-bottom: 30px;
+    letter-spacing: 0.15em;
+  }
+
+  .title-divider {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--parchment-darker), var(--gold), var(--parchment-darker), transparent);
+    margin: 20px 0;
+  }
+
+  .title-intro {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink);
+    margin-bottom: 30px;
+    font-style: italic;
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 12px 30px;
+    border: 2px solid var(--blood);
+    background: var(--blood);
+    color: var(--parchment);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 3px 3px 0 var(--blood-bright);
+    position: relative;
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  .btn:hover {
+    background: var(--blood-bright);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .btn-gold {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--copper);
+  }
+
+  .btn-gold:hover {
+    background: var(--gold-light);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--blood);
+    box-shadow: 3px 3px 0 var(--parchment-dark);
+  }
+
+  .btn-outline:hover {
+    background: var(--blood);
+    color: var(--parchment);
+  }
+
+  .btn-sm {
+    font-size: 0.8rem;
+    padding: 7px 16px;
+  }
+
+  .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* SECTION HEADERS */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--blood);
+    border-bottom: 2px solid var(--parchment-darker);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* STAT BOXES */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    background: var(--parchment-dark);
+    background: linear-gradient(135deg, var(--parchment-dark), var(--parchment-darker));
+    border: 2px solid var(--parchment-darker);
+    padding: 10px;
+    text-align: center;
+    position: relative;
+  }
+
+  .stat-box::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 8px; height: 8px;
+    background: var(--copper);
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  }
+
+  .stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--copper);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--blood);
+    line-height: 1.1;
+  }
+
+  .stat-max {
+    font-size: 0.75rem;
+    color: var(--copper);
+  }
+
+  /* HP BAR */
+  .hp-bar-container {
+    background: var(--parchment-darker);
+    border: 1px solid var(--copper);
+    height: 10px;
+    margin-top: 4px;
+    position: relative;
+  }
+
+  .hp-bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--blood), var(--blood-bright));
+    transition: width 0.5s;
+  }
+
+  /* LAYOUT */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    padding: 20px;
+    border-right: 3px solid var(--parchment-darker);
+    overflow-y: auto;
+  }
+
+  .main-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  /* LOG */
+  #game-log {
+    background: rgba(0,0,0,0.03);
+    border: 1px solid var(--parchment-darker);
+    padding: 12px;
+    height: 300px;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+  }
+
+  .log-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .log-combat { color: var(--blood); }
+  .log-success { color: var(--emerald); font-weight: 600; }
+  .log-fail { color: #8b4513; }
+  .log-special { color: #4a2080; font-weight: 600; font-style: italic; }
+  .log-system { color: #555; font-style: italic; font-size: 0.85rem; }
+
+  /* DICE */
+  .dice-display {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    margin: 10px 0;
+    background: rgba(0,0,0,0.04);
+    border: 1px dashed var(--parchment-darker);
+  }
+
+  .die {
+    width: 45px;
+    height: 45px;
+    border: 3px solid var(--copper);
+    background: var(--parchment);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--blood);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.1), 2px 2px 0 var(--parchment-darker);
+    transition: all 0.1s;
+  }
+
+  .die.rolling {
+    animation: diceRoll 0.6s ease;
+  }
+
+  @keyframes diceRoll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-20deg) scale(1.1); }
+    50% { transform: rotate(20deg) scale(0.9); }
+    75% { transform: rotate(-10deg) scale(1.05); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+
+  /* ENEMY CARD */
+  .enemy-card {
+    border: 2px solid var(--blood);
+    padding: 12px;
+    background: linear-gradient(135deg, #f5e9c0, #ead5a0);
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .enemy-card::before {
+    content: '☠';
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--parchment);
+    padding: 0 8px;
+    color: var(--blood);
+    font-size: 1.2rem;
+  }
+
+  .enemy-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--blood);
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 8px;
+  }
+
+  /* SKILLS LIST */
+  .skill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    font-size: 0.9rem;
+  }
+
+  .skill-item:hover { background: rgba(0,0,0,0.03); }
+
+  .skill-val {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    color: var(--blood);
+    background: var(--parchment-dark);
+    padding: 2px 8px;
+    border: 1px solid var(--parchment-darker);
+    min-width: 36px;
+    text-align: center;
+  }
+
+  /* EQUIPMENT */
+  .equip-item {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--parchment-darker);
+    margin-bottom: 16px;
+  }
+
+  .tab {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border: 2px solid var(--parchment-darker);
+    border-bottom: none;
+    background: var(--parchment-dark);
+    cursor: pointer;
+    color: var(--copper);
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    background: var(--parchment);
+    color: var(--blood);
+    border-color: var(--parchment-darker);
+    margin-bottom: -2px;
+    padding-bottom: 10px;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CHARACTER CREATION */
+  #screen-create {
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .create-container {
+    max-width: 600px;
+    width: 100%;
+    padding: 35px 45px;
+  }
+
+  .form-row {
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--copper);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--parchment-darker);
+    background: var(--parchment);
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--gold); }
+
+  select.form-input {
+    cursor: pointer;
+  }
+
+  .stat-roll-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .rolled-stat {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--blood);
+    text-align: center;
+    padding: 6px;
+    border: 2px solid var(--parchment-darker);
+    background: var(--parchment-dark);
+    min-width: 55px;
+  }
+
+  /* SKILLS ALLOCATION */
+  .skill-alloc {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+
+  .skill-alloc-name { font-size: 0.9rem; flex: 1; }
+
+  .skill-alloc-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .skill-btn {
+    width: 26px; height: 26px;
+    border: 1px solid var(--copper);
+    background: var(--parchment-dark);
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 1rem;
+    color: var(--blood);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+  }
+
+  .skill-btn:hover { background: var(--blood); color: var(--parchment); }
+
+  .skill-pts-display {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+    color: var(--blood);
+  }
+
+  .points-remaining {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--emerald);
+    text-align: center;
+    padding: 8px;
+    border: 1px solid var(--parchment-darker);
+    background: rgba(26, 74, 42, 0.08);
+    margin-bottom: 12px;
+  }
+
+  /* ADVENTURE */
+  .adventure-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px solid var(--parchment-darker);
+    background: rgba(0,0,0,0.03);
+    min-height: 120px;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .choice-btn {
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    padding: 10px 16px;
+    border: 2px solid var(--parchment-darker);
+    background: var(--parchment-dark);
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    position: relative;
+    padding-left: 36px;
+  }
+
+  .choice-btn::before {
+    content: '⚔';
+    position: absolute;
+    left: 12px;
+    color: var(--blood);
+  }
+
+  .choice-btn:hover {
+    background: var(--blood);
+    color: var(--parchment);
+    border-color: var(--blood);
+  }
+
+  .choice-btn:hover::before { color: var(--gold); }
+
+  /* COMBAT */
+  .combat-panel {
+    border: 2px solid var(--blood);
+    padding: 16px;
+    background: linear-gradient(to bottom, #fff5e0, #f5e9c5);
+  }
+
+  .combat-vs {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .combatant { text-align: center; }
+
+  .combatant-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--blood);
+    margin-bottom: 4px;
+  }
+
+  .vs-symbol {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--blood);
+    text-align: center;
+  }
+
+  .top-bar {
+    background: var(--ink);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .top-bar-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .top-bar-hero {
+    font-family: 'Cinzel', serif;
+    color: var(--parchment);
+    font-size: 0.85rem;
+  }
+
+  /* NOTIFICATION */
+  .notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    padding: 12px 30px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    border: 3px solid var(--gold);
+    background: var(--parchment);
+    color: var(--ink);
+    box-shadow: 0 4px 20px var(--shadow);
+    animation: notifIn 0.3s ease;
+    max-width: 400px;
+  }
+
+  @keyframes notifIn { from { opacity: 0; top: -20px; } to { opacity: 1; top: 20px; } }
+
+  .notification.danger { border-color: var(--blood); color: var(--blood); }
+  .notification.success { border-color: var(--emerald); color: var(--emerald); }
+
+  /* LORE */
+  .lore-entry {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--gold);
+    background: rgba(0,0,0,0.03);
+  }
+
+  .lore-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--copper);
+    margin-bottom: 6px;
+  }
+
+  .lore-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--parchment-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--copper); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--blood); }
+
+  /* Separator ornament */
+  .ornament {
+    text-align: center;
+    color: var(--gold);
+    font-size: 1.2rem;
+    margin: 10px 0;
+    letter-spacing: 0.3em;
+  }
+
+  .small-note {
+    font-size: 0.8rem;
+    color: var(--copper);
+    font-style: italic;
+  }
+
+  .highlight-box {
+    background: rgba(184, 134, 42, 0.12);
+    border: 1px solid var(--gold);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 3px solid var(--parchment-darker); }
+    .main-content { max-height: unset; }
+    h1.game-title { font-size: 2.2rem; }
+    .title-container, .create-container { padding: 25px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="screen-title" class="screen active">
+  <div class="parchment title-container">
+    <div class="title-emblem">🐉</div>
+    <div class="title-dots">· · · · ·</div>
+    <h1 class="game-title">TITÁN</h1>
+    <h2 class="game-subtitle">Kaland · Játék · Kockázat</h2>
+    <div class="title-divider"></div>
+    <p class="title-intro">
+      Steve Jackson és Ian Livingstone fantázia világában, a Titán földjén, 
+      ahol orkok és sárkányok népesítik be a sötét erdőket, ahol a varázslók hatalma 
+      megrendíti a hegyek alapjait — itt kezdődik a te kalandod, bátor felfedező.
+    </p>
+    <div class="ornament">⚔ ✦ ⚔</div>
+    <p style="font-size:0.95rem; line-height:1.7; margin-bottom:24px;">
+      Alkotd meg saját hősedet, adj neki képzettségeket, és küzdj meg Allansia 
+      veszélyes teremtményeivel a KJK (Kaland-Játék-Kockázat) szabályrendszer szerint.
+    </p>
+    <div class="btn-group">
+      <button class="btn btn-gold" onclick="showScreen('screen-create')">⚔ Új Kalandor</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-lore')">📜 A Titán Világa</button>
+    </div>
+    <div class="ornament" style="margin-top:20px;">· · ·</div>
+    <p class="small-note" style="text-align:center;">Kaland-Játék-Kockázat Szerepjáték · Jackson & Livingstone · Titán világa</p>
+  </div>
+</div>
+
+<!-- ===== CHARACTER CREATION ===== -->
+<div id="screen-create" class="screen">
+  <div style="align-items:center; justify-content:center; display:flex; flex:1; padding:20px; background: rgba(0,0,0,0.3);">
+  <div class="parchment create-container">
+    <h2 class="section-title">🗡 Kalandor Készítése</h2>
+
+    <!-- Step 1: Basic Info -->
+    <div id="step-1">
+      <div class="form-row">
+        <label class="form-label">Hős neve</label>
+        <input type="text" id="hero-name" class="form-input" placeholder="pl. Ulrik Wolfsbane..." maxlength="30">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Nem</label>
+        <select id="hero-gender" class="form-input">
+          <option value="férfi">Férfi</option>
+          <option value="nő">Nő</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Faj</label>
+        <select id="hero-race" class="form-input">
+          <option value="ember">Ember</option>
+          <option value="törpe">Törpe</option>
+          <option value="elf">Elf</option>
+          <option value="félelf">Fél-Elf</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Alap Kaszt</label>
+        <select id="hero-class" class="form-input">
+          <option value="harcos">Harcos</option>
+          <option value="varázsló">Varázsló</option>
+          <option value="tolvaj">Tolvaj</option>
+          <option value="vándor">Vándor</option>
+          <option value="pap">Pap</option>
+        </select>
+      </div>
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-outline btn-sm" onclick="showScreen('screen-title')">← Vissza</button>
+        <button class="btn btn-gold" onclick="goToStep2()">Tovább → Tulajdonságok</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Roll Stats -->
+    <div id="step-2" style="display:none;">
+      <p style="margin-bottom:16px; font-style:italic; font-size:0.95rem;">
+        Dobd meg alaptulajdonságaidat! A kockák döntik el Hősöd sorsát Titánon.
+      </p>
+
+      <div class="stat-roll-row">
+        <div>
+          <div class="form-label">ÜGYESSÉG (1d6+6)</div>
+          <div class="small-note">Erő, ügyesség, harci tudás alapja</div>
+        </div>
+        <div class="rolled-stat" id="roll-ugy">—</div>
+        <button class="btn btn-sm" onclick="rollStat('ugy', 1, 6)">🎲 Dob</button>
+      </div>
+
+      <div class="stat-roll-row">
+        <div>
+          <div class="form-label">ÉLETERŐ (2d6+12)</div>
+          <div class="small-note">Egészség, elviselt sérülések</div>
+        </div>
+        <div class="rolled-stat" id="roll-elet">—</div>
+        <button class="btn btn-sm" onclick="rollStat('elet', 2, 12)">🎲 Dob</button>
+      </div>
+
+      <div class="stat-roll-row">
+        <div>
+          <div class="form-label">SZERENCSE (1d6+6)</div>
+          <div class="small-note">Az istenek kegyelme</div>
+        </div>
+        <div class="rolled-stat" id="roll-sze">—</div>
+        <button class="btn btn-sm" onclick="rollStat('sze', 1, 6)">🎲 Dob</button>
+      </div>
+
+      <div class="highlight-box" id="race-bonus-info" style="display:none;"></div>
+
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-outline btn-sm" onclick="goToStep1()">← Vissza</button>
+        <button class="btn btn-gold" id="to-step3-btn" onclick="goToStep3()" disabled>Tovább → Képzettségek</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Skills -->
+    <div id="step-3" style="display:none;">
+      <div class="points-remaining" id="pts-remaining">Elosztható pontok: <span id="pts-left">?</span></div>
+      <p class="small-note" style="margin-bottom:12px;">Max 4 pont per képzettség. Az alap érték = Ügyesség + pont.</p>
+
+      <div id="skills-list-alloc" style="max-height:280px; overflow-y:auto;"></div>
+
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-outline btn-sm" onclick="goToStep2Back()">← Vissza</button>
+        <button class="btn btn-gold" id="to-step4-btn" onclick="goToStep4()">Tovább → Felszerelés</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Equipment & Finish -->
+    <div id="step-4" style="display:none;">
+      <p style="font-style:italic; font-size:0.95rem; margin-bottom:14px;">
+        A kalandor kezdeti felszerelése. Mindenki ugyanannyival indul.
+      </p>
+      <div class="highlight-box">
+        <strong>Kezdeti Felszerelés:</strong><br>
+        • Egy fegyver (választható alább)<br>
+        • Közönséges ruházat / könnyű bőrpáncél<br>
+        • Hátizsák és 1d6 napi élelem<br>
+        • <span id="start-gold">?</span> Aranytallér
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <label class="form-label">Kezdeti Fegyver</label>
+        <select id="start-weapon" class="form-input">
+          <option value="kard">Kard (sebzés: D6, ált. 2-3 ÉP)</option>
+          <option value="íj">Íj + 12 nyíl (sebzés: D6, távolság)</option>
+          <option value="fejsze">Harci Fejsze (sebzés: D6, csat)</option>
+          <option value="bot">Bot (sebzés: D6, köz)</option>
+          <option value="dárda">Dárda x3 (dobható)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Rövid Háttér (opcionális)</label>
+        <textarea id="hero-bg" class="form-input" rows="3" style="resize:vertical;" placeholder="Honnan jött, mit csinált eddig..."></textarea>
+      </div>
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-outline btn-sm" onclick="goToStep3Back()">← Vissza</button>
+        <button class="btn btn-gold" onclick="finalizeCharacter()">⚔ Kalandozni!</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ===== LORE SCREEN ===== -->
+<div id="screen-lore" class="screen">
+  <div class="top-bar">
+    <span class="top-bar-title">🌍 A Titán Világa</span>
+    <button class="btn btn-outline btn-sm" onclick="showScreen('screen-title')">← Vissza</button>
+  </div>
+  <div style="padding:20px; display:flex; justify-content:center; flex:1; background:rgba(0,0,0,0.2);">
+  <div class="parchment" style="max-width:720px; width:100%; padding:30px 40px;">
+    <h2 class="section-title">Titán — A Szárnyaló Fantázia Világa</h2>
+
+    <div class="lore-entry">
+      <div class="lore-title">⚔ A Világ</div>
+      <div class="lore-text">A Titán világa hatalmas és veszedelmes. Három nagy kontinensből áll: <strong>Allansia</strong>, a Veszélyek Földje — ahol a legtöbb kaland játszódik —, a titokzatos <strong>Khul</strong>, a Sötét Kontinens, valamint az <strong>Óvilág</strong>, ahol az ósi civilizációk nyomai még megtalálhatóak.</div>
+    </div>
+
+    <div class="lore-entry">
+      <div class="lore-title">🏔 Allansia</div>
+      <div class="lore-text">Az Allansiai kontinenst vad vidékek, sötét erdők, és veszélyes hegyvonulatok borítják. A Tűzhegy Varázslója, a Yore-erdő és az Ork barlangjárat vidékei mind itt találhatóak. A kalandozók legtöbbször Port Blacksandból — a Kalózok Városából — vagy az Ezüst Gázló menti falvakból indulnak útnak.</div>
+    </div>
+
+    <div class="lore-entry">
+      <div class="lore-title">⚖ A Jó és a Gonosz Erői</div>
+      <div class="lore-text">A Jó istenek, élükön a Teremtővel, az értelmes fajok fennmaradásáért küzdenek. Velük szemben állnak a Sötét Urak: a <strong>Halál</strong>, a <strong>Pusztulás</strong> (Dögvész) és a <strong>Korság</strong> (Betegség) — a nagy háború óta fogságban tartott, mégis veszélyes gonosz istenségek. Köztük egyensúlyoz <strong>Logaan Úr</strong>, a Cselszövő, az örök semleges.</div>
+    </div>
+
+    <div class="lore-entry">
+      <div class="lore-title">🧝 Fajok</div>
+      <div class="lore-text"><strong>Emberek</strong> — Allansia legnépesebb faja, sokoldalú és vállalkozó szellemű. <strong>Törpék</strong> — a mélységek mesterei, kiváló harcosok és bányászok, de nem képesek mágiahasználatra. <strong>Elfek</strong> (Galana gyermekei) — hosszú életű, természetszerető lények, különösen ügyesek az íjászatban. A gonosz Orkok és Goblinok mindig fenyegetik a békés népeket.</div>
+    </div>
+
+    <div class="lore-entry">
+      <div class="lore-title">🎲 A KJK Szabályrendszer</div>
+      <div class="lore-text">Három fő tulajdonság határozza meg a hőst: <strong>ÜGYESSÉG</strong> (erő, ügyesség, harc), <strong>ÉLETERŐ</strong> (egészség, elviselhető sérülések) és <strong>SZERENCSE</strong> (az istenek kegyelme). A harc kockadobásokon alapul — mindenki dob 2d6-ot és hozzáadja képzettségét. A nagyobb érték seber ejt az ellenfélen.</div>
+    </div>
+
+    <div class="ornament">⚔ ✦ ⚔</div>
+
+    <div class="btn-group" style="margin-top:10px;">
+      <button class="btn btn-gold" onclick="showScreen('screen-create')">⚔ Kalandozni indulok!</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-title')">← Főmenü</button>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="screen-game" class="screen">
+  <div class="top-bar">
+    <span class="top-bar-title">⚔ Titán</span>
+    <span class="top-bar-hero" id="topbar-hero">—</span>
+    <button class="btn btn-outline btn-sm" onclick="confirmMainMenu()">Főmenü</button>
+  </div>
+
+  <div class="main-layout parchment" style="flex:1;">
+    <!-- SIDEBAR: Character Sheet -->
+    <div class="sidebar">
+      <div class="section-title">📜 Karakterlap</div>
+      <div style="font-family:'Cinzel',serif; font-size:1.1rem; font-weight:600; color:var(--blood); margin-bottom:4px;" id="char-name-display">—</div>
+      <div style="font-size:0.85rem; color:var(--copper); margin-bottom:14px;" id="char-info-display">—</div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">Ügyesség</div>
+          <div class="stat-value" id="stat-ugy">—</div>
+          <div class="stat-max" id="stat-ugy-max"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Életerő</div>
+          <div class="stat-value" id="stat-elet">—</div>
+          <div class="stat-max" id="stat-elet-max"></div>
+          <div class="hp-bar-container">
+            <div class="hp-bar" id="hp-bar"></div>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Szerencse</div>
+          <div class="stat-value" id="stat-sze">—</div>
+          <div class="stat-max" id="stat-sze-max"></div>
+        </div>
+      </div>
+
+      <div style="font-size:0.85rem; margin-bottom:4px; color:var(--copper);">Pénz: <strong id="gold-display">—</strong> AT</div>
+      <div style="font-size:0.85rem; margin-bottom:12px; color:var(--copper);">Tapasztalat: <strong id="xp-display">0</strong> TP</div>
+
+      <div class="section-title" style="font-size:1rem;">🗡 Fegyver & Páncél</div>
+      <div id="equip-display" style="font-size:0.9rem; margin-bottom:12px; color:var(--ink);"></div>
+
+      <div class="section-title" style="font-size:1rem;">📚 Képzettségek</div>
+      <div id="skills-display"></div>
+
+      <div style="margin-top:14px;">
+        <button class="btn btn-sm btn-outline" style="width:100%; margin-bottom:6px;" onclick="useLuck()">🍀 Szerencsepróba</button>
+        <button class="btn btn-sm btn-outline" style="width:100%; margin-bottom:6px;" onclick="restHero()">💤 Pihenés (+2 ÉP)</button>
+      </div>
+    </div>
+
+    <!-- MAIN: Adventure -->
+    <div class="main-content">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('tab-adventure')">⚔ Kaland</div>
+        <div class="tab" onclick="switchTab('tab-combat')">🗡 Harc</div>
+        <div class="tab" onclick="switchTab('tab-log')">📜 Napló</div>
+        <div class="tab" onclick="switchTab('tab-rules')">📖 Szabályok</div>
+      </div>
+
+      <!-- ADVENTURE TAB -->
+      <div id="tab-adventure" class="tab-content active">
+        <div class="adventure-text" id="adventure-text">
+          <em>Betöltés...</em>
+        </div>
+        <div id="adventure-image" style="margin-bottom:10px;"></div>
+        <div class="choices" id="choices-container"></div>
+        <div id="combat-inline"></div>
+      </div>
+
+      <!-- COMBAT TAB -->
+      <div id="tab-combat" class="tab-content">
+        <div class="section-title">⚔ Harcrend</div>
+        <div id="no-combat-msg" style="font-style:italic; color:var(--copper); padding:10px;">
+          Jelenleg nincs aktív harc. Lépj kalandba és szállj szembe ellenséggel!
+        </div>
+        <div id="combat-area" style="display:none;">
+          <div class="combat-vs">
+            <div class="combatant">
+              <div class="combatant-name" id="fighter-hero-name">—</div>
+              <div style="font-size:1.4rem; font-weight:900; color:var(--blood);" id="fighter-hero-hp">—</div>
+              <div class="stat-max">ÉLETERŐ</div>
+            </div>
+            <div class="vs-symbol">⚔<br>VS</div>
+            <div class="combatant">
+              <div class="combatant-name" id="fighter-enemy-name">—</div>
+              <div style="font-size:1.4rem; font-weight:900; color:var(--blood);" id="fighter-enemy-hp">—</div>
+              <div class="stat-max">ÉLETERŐ</div>
+            </div>
+          </div>
+
+          <div class="dice-display" id="dice-display">
+            <div class="die" id="die1">?</div>
+            <div class="die" id="die2">?</div>
+            <span style="font-family:'Cinzel',serif; color:var(--copper);">VS</span>
+            <div class="die" id="die3">?</div>
+            <div class="die" id="die4">?</div>
+          </div>
+
+          <div id="combat-result" style="text-align:center; font-size:1rem; color:var(--blood); margin:8px 0; font-style:italic; min-height:24px;"></div>
+
+          <div class="btn-group">
+            <button class="btn btn-gold" id="attack-btn" onclick="doAttack()">⚔ Támadás!</button>
+            <button class="btn btn-outline" id="luck-combat-btn" onclick="useLuckInCombat()">🍀 Szerencse</button>
+            <button class="btn btn-outline btn-sm" id="flee-btn" onclick="fleeCombat()">💨 Menekülés</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOG TAB -->
+      <div id="tab-log" class="tab-content">
+        <div class="section-title">📜 Kaland Naplója</div>
+        <div id="game-log"></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="clearLog()">🗑 Törlés</button>
+      </div>
+
+      <!-- RULES TAB -->
+      <div id="tab-rules" class="tab-content">
+        <div class="section-title">📖 Szabályok</div>
+        <div style="font-size:0.95rem; line-height:1.7;">
+          <div class="lore-entry">
+            <div class="lore-title">Tulajdonságok</div>
+            <div>
+              <strong>ÜGYESSÉG:</strong> 1d6+6. Ez az alap minden képzettséghez. Ha 0-ra csökken, a hős meghal.<br>
+              <strong>ÉLETERŐ:</strong> 2d6+12. Ha 0 = eszméletlenség, -1 = haldoklás, -2 = halál.<br>
+              <strong>SZERENCSE:</strong> 1d6+6. Szerencsepróbánál 2d6 ≤ SZERENCSE = siker, majd -1.
+            </div>
+          </div>
+          <div class="lore-entry">
+            <div class="lore-title">Harc Menete</div>
+            <div>
+              1. Mindkét fél dob 2d6-ot + fegyveres képzettség (vagy ÜGYESSÉG).<br>
+              2. Aki nagyobb értéket ér el, az sebet ejt.<br>
+              3. Döntetlen = kivédik egymás csapását, folytatódik a harc.<br>
+              4. Dupla 6 = <strong>Nagy Csapás</strong> (azonnali halál ha duplán múlja az ellenfelet).<br>
+              5. Dupla 1 = <strong>Balsiker</strong> (rossz dolog történik a támadóval).
+            </div>
+          </div>
+          <div class="lore-entry">
+            <div class="lore-title">Sebzés és Páncél</div>
+            <div>
+              Sebzés: fegyvertől függő táblázat alapján 1d6-tal döntjük el.<br>
+              Páncél: külön dobással meghatározza, mennyit fog fel a sebzésből.<br>
+              Kard alap sebzés: 2, 2, 2, 2, 2, 3, 3 (1d6 szerint).<br>
+              Bőrpáncél véd érték: 0, 0, 0, 0, 1, 1, 2 (1d6 szerint).
+            </div>
+          </div>
+          <div class="lore-entry">
+            <div class="lore-title">Szerencse a Harcban</div>
+            <div>
+              Ha elhárítani akarod a sérülést: sikeres szerencsepróba = -1 sebzés, sikertelen = +1 sebzés.<br>
+              Ha növelni akarod a saját sebzésed: sikeres = +1 sebzés, sikertelen = -1 sebzés.<br>
+              Minden próba után -1 SZERENCSE pont!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification" style="display:none;" class="notification"></div>
+
+<script>
+// ==========================================
+// GAME DATA
+// ==========================================
+const SKILLS_LIST = {
+  harci: ['Kard', 'Íj', 'Fejsze', 'Bot', 'Dárda', 'Kétkezes kard', 'Pusztakezes harc', 'Lándzsa', 'Számszeríj'],
+  mozgas: ['Akrobatika', 'Kitérés', 'Lovaglás', 'Mászás', 'Ugrás', 'Úszás'],
+  tolvaj: ['Álcázás', 'Csapda felismerés', 'Cserkészés', 'Lopakodás', 'Trükközés', 'Zárlfelkezdés', 'Rejtőzköd'],
+  tudomany: ['Gyógyítás', 'Erdei ismeret', 'Helyismeret', 'Rábeszélés', 'Mágiaismeret', 'Állat ismeret', 'Észlelés', 'Erő']
+};
+
+const CLASS_BONUS_SKILLS = {
+  harcos: ['Kard', 'Fejsze'],
+  varázsló: ['Mágiaismeret'],
+  tolvaj: ['Lopakodás', 'Trükközés'],
+  vándor: ['Erdei ismeret', 'Íj'],
+  pap: ['Gyógyítás', 'Rábeszélés']
+};
+
+const RACE_BONUSES = {
+  ember: { info: 'Emberek: +0 módosító, sokoldalú faj.' },
+  törpe: { info: 'Törpék: +2 ÉLETERŐ, -2 SZERENCSE. Nem tanulhatnak Mágiaismeret képzettséget.', elet: 2, sze: -2 },
+  elf: { info: 'Elfek: +1 ÜGYESSÉG, -1 ÉLETERŐ. Természetes íjászok.', ugy: 1, elet: -1 },
+  félelf: { info: 'Fél-Elfek: +1 ÜGYESSÉG. Sokoldalú faj.', ugy: 1 }
+};
+
+const WEAPON_DAMAGE = {
+  kard: [2,2,2,2,2,3],
+  íj: [1,1,2,2,2,3],
+  fejsze: [1,2,2,2,2,3],
+  bot: [1,2,2,2,2,2],
+  dárda: [1,2,2,2,2,3],
+  pusztakezes: [1,1,1,2,2,2]
+};
+
+const ARMOR_PROTECTION = {
+  semmi: [0,0,0,0,0,0],
+  bőr: [0,0,0,0,1,1],
+  láncing: [0,0,0,1,2,2],
+  lemezvért: [0,0,0,1,2,3]
+};
+
+// Adventures
+const ADVENTURES = [
+  {
+    id: 'start',
+    text: `A nap már rég felkelt, mire végre elhagyod az utolsó fogadót. Hátizsákod vállaidat nyomja, kardod az oldaladnál csörög. Az út előtted kétfelé ágazik.
+
+A bal oldalon egy viharos idők miatt megrongált tábla áll: <em>"Rézkunyhó fogadó — 3 mérföld"</em>. A jobb oldalon a sűrű erdő sötét árnyéka vetül az útra, és valahonnan messziről, mintha sikolyok hangját hallanád...`,
+    choices: [
+      { text: 'Haladj a fogadó felé (bal út)', next: 'tavern' },
+      { text: 'Vizsgáld meg az erdőből érkező hangokat (jobb út)', next: 'forest_entry' },
+      { text: 'Vizsgáld meg a táblát közelről', next: 'sign_inspect', skillCheck: { skill: 'Észlelés', difficulty: 10 } }
+    ]
+  },
+  {
+    id: 'tavern',
+    text: `A Rézkunyhó fogadó egy düledező, de barátságos épület. Belépve a tömött ivóba, az asztalok közt zarándokok, kereskedők és gyanús tekintetű alakok keverednek.
+
+Egy idős, fehér hajú asszony közeledik feléd. "Jól jössz, kalandor," suttogja. "Három napja eltűnt az unokaöcsém az erdőben. Ha megtalálod, fizetek — öt aranytallért!"
+
+Ezzel egyidőben egy köpcös kereskedő is integet neked az egyik asztaltól.`,
+    choices: [
+      { text: 'Meghallgatod az öregasszonyt', next: 'old_woman_quest' },
+      { text: 'Odamész a kereskedőhöz', next: 'merchant' },
+      { text: 'Rendelsz italt és pihenő', next: 'rest_tavern', heal: 3 }
+    ]
+  },
+  {
+    id: 'rest_tavern',
+    text: `Leülsz egy nyugodt sarokba, rendelsz egy korsó habos sört és egy tál húslevest. A meleg étel és az ital felfrissítenek. <em>Visszakapsz 3 ÉLETERŐ pontot</em> (max-ig).
+
+Pihent és elégedett vagy, mire a fogadós figyelmeztet: "Hamarosan sötétedik, barátom. Ha maradni akarsz, a szoba egy aranytallér."`,
+    choices: [
+      { text: 'Fizets és a szobában töltöd az éjt (+2 ÉP, -1 AT)', next: 'morning', gold: -1, heal: 2 },
+      { text: 'Úton maradsz és kimész a fogadóból', next: 'forest_entry' },
+      { text: 'Megnézed kik vannak a fogadóban', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'old_woman_quest',
+    text: `Az öregasszony — Margit néninek hívják — elmeséli, hogy unokaöccse, Péter, már három napja nem jött haza az Ávárény-erdőből. Tűzifát ment vágni, de azóta nyoma veszett.
+
+"Félek, az Orklurkók fogták el," mondja reszkető hangon. "Ők szokták felállítani a csapdáikat a Nyírfa-tisztáson. Téged jó vágásúnak látlak, kalandor..."`,
+    choices: [
+      { text: 'Elvállalod a küldetést és az erdőbe indulsz', next: 'forest_entry' },
+      { text: 'Alkudozol: tíz aranytallért kérsz', next: 'negotiate', skillCheck: { skill: 'Rábeszélés', difficulty: 11 } },
+      { text: 'Sajnálod, de visszautasítod', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'negotiate',
+    text: `KÉPZETTSÉGPRÓBA: RÁBESZÉLÉS`,
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Az öregasszony egy pillanatig gondolkodik, majd beleegyezik. "Legyen tíz tallér, ha épségben hozod haza Péteréket..." — mondja reszketeg hangon, de szemében megkönnyebbülés csillog.
+
+Tíz aranyért megéri a kockázat!`,
+      choices: [
+        { text: 'Az erdőbe indulsz', next: 'forest_entry', gold: 2 }
+      ]
+    },
+    onFail: {
+      text: `Az öregasszony szomorúan rázza a fejét. "Csak öt tallérja van, kalandor. Ennyi az egész vagyona." — mondja szomorúan.`,
+      choices: [
+        { text: 'Elfogadod az öt tallért és az erdőbe indulsz', next: 'forest_entry' },
+        { text: 'Visszautasítod', next: 'tavern' }
+      ]
+    }
+  },
+  {
+    id: 'merchant',
+    text: `A kereskedő — egy kövérkés, mosolygós emberke — felállítja magát. "Árut szállítottam a Kővárba, de az utam nagyon veszélyes. Szükségem van egy testőrre! Három aranytallér naponta és te velem jössz?"
+
+Ránézve gyanúsan sok gyűrű csillog az ujjain egy egyszerű kereskedőhöz képest.`,
+    choices: [
+      { text: 'Igent mondasz és csatlakozol hozzá', next: 'merchant_escort' },
+      { text: 'Kérdezősködsz a kereskedőről (Észlelés)', next: 'merchant_inspect', skillCheck: { skill: 'Észlelés', difficulty: 10 } },
+      { text: 'Visszautasítod és máshova mész', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'forest_entry',
+    text: `Az erdő sötét és sűrű. A fák közt csak sávokban szűrődik be a nap fénye. Az avaron csoszogó lépéseid és a madarak csicsergése töri meg a csendet.
+
+Haladva egy ösvényen hirtelen megállsz — az erdő szokatlanul csendes lett. Túl csendes. Majd a bokrok között mozgást észlelsz...
+
+<em>Egy Ork rablóbanda tagja lép elő, csúnya görbe karddal a kezében!</em>`,
+    choices: [
+      { text: '⚔ Szembeszállsz az Orkkal!', next: 'fight_orc', startCombat: { name: 'Ork Rabló', ugy: 7, elet: 10, armor: 'bőr', weapon: 'kard', xp: 20, gold: { min: 1, max: 3 } } },
+      { text: 'Megpróbálsz lopakodva elkerülni (Lopakodás)', next: 'forest_sneak', skillCheck: { skill: 'Lopakodás', difficulty: 11 } },
+      { text: 'Futásnak eredsz!', next: 'forest_flee' }
+    ]
+  },
+  {
+    id: 'forest_sneak',
+    text: `KÉPZETTSÉGPRÓBA: LOPAKODÁS`,
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Ügyesen beolvadsz az árnyékok közé. Az Ork vakargatja a fejét, majd morgolódva továbbsétál. Megúsztad harctalanul!
+
+Mélyebbre hatolsz az erdőbe és egy tisztást pillantasz meg. A fák közt egy kicsi, piszkos kunyhó áll — valaki él itt...`,
+      choices: [
+        { text: 'Megközelíted a kunyhót', next: 'forest_hut' },
+        { text: 'Visszatérsz a fogadóba', next: 'tavern' }
+      ]
+    },
+    onFail: {
+      text: `Egy ágat eltörve magad felfedsz. Az Ork megfordul és meglát!`,
+      choices: [
+        { text: '⚔ Harcolj!', next: 'fight_orc', startCombat: { name: 'Ork Rabló', ugy: 7, elet: 10, armor: 'bőr', weapon: 'kard', xp: 20, gold: { min: 1, max: 3 } } }
+      ]
+    }
+  },
+  {
+    id: 'forest_flee',
+    text: `Futásnak eredsz! Az Ork üvöltve vetül utánad, de te gyorsabb vagy. Botorkálva a sűrűben végül egy sziklás kiemelkedésre másztál fel, ahol az Ork nem követ.
+
+Lihegve nézel le a mélybe — az Ork elveszítette a nyomodat. De a zuhanás közben megkarcoltak az ágak.`,
+    choices: [
+      { text: 'Visszatérsz az útra (elveszítesz 1 ÉP)', next: 'start', dmg: 1 },
+      { text: 'Megvárod míg az Ork elmegy, majd a kunyhót keresed', next: 'forest_hut' }
+    ]
+  },
+  {
+    id: 'fight_orc',
+    text: `Az Ork vicsorogva veti rád magát! Pengék csörrennek össze, ahogy megküzdötök az erdő mélyén.`,
+    isCombatNode: true
+  },
+  {
+    id: 'orc_victory',
+    text: `Az Ork a porba zuhan! Felszedsz a testéről néhány aranytallért és egy rozsdás, de még használható kést.
+
+Az erdőben előre haladva egy kis tisztásra érsz. A bokrok mögül egy fiatal fiú bújik elő, rémülten de épségben. <em>Ez Péter lehet, az öregasszony unokaöccse!</em>
+
+"Segíts rajtam!" — könyörög a fiú. "Az Orkok fogtak el, de egyedül menekültem meg!"`,
+    choices: [
+      { text: 'Magaddal viszed Pétert a fogadóba (+10 XP, +5 AT)', next: 'quest_complete', gold: 5, xp: 10 },
+      { text: 'Átadod neki az Ork kését és megmutatod az utat', next: 'forest_hut' }
+    ]
+  },
+  {
+    id: 'quest_complete',
+    text: `Margit néni sírva fakad örömében, mikor látja unokaöccsét épségben! Reszketős kézzel nyomja markodba az ígért aranytallérokat.
+
+"Isten áldjon meg, bátor kalandor! Ha valaha visszatérsz e vidékre, a Rézkunyhóban mindig akad neked egy meleg vacsora és szállás ingyen!"
+
+<em>Küldetés teljesítve! A vidék kicsit biztonságosabb lett.</em>`,
+    choices: [
+      { text: 'Pihensz a fogadóban és folytatsz más kalandot', next: 'tavern', heal: 4 },
+      { text: 'Továbbutazol Allansiában', next: 'road_north' }
+    ]
+  },
+  {
+    id: 'forest_hut',
+    text: `A kunyhó ajtaja résnyire nyitva van. Belülről fény szűrődik ki. Bekukucskálsz: egy öregember ül egy hármas lábú széken, és régi pergamenteket lapoz.
+
+Meghall téged és felkapja a fejét — de nem ijed meg. Csak annyit mond: "Gyere be, kalandor. Tudtam, hogy jössz."`,
+    choices: [
+      { text: 'Bemész', next: 'hermit' },
+      { text: 'Gyanakszol és karcold a kardoból (Észlelés)', next: 'hermit_check', skillCheck: { skill: 'Észlelés', difficulty: 9 } }
+    ]
+  },
+  {
+    id: 'hermit',
+    text: `Az öregember — Gondvald a Bölcs — elmagyarázza, hogy ő egy visszavonult varázsló, aki régóta figyeli az erdőt.
+
+"Valami megmozdult az Ork-barlangtól délre," mondja komoran. "Egy Halállovag keresi az Élet Kristályát. Ha megtalálja... minden elveszett."
+
+Egy kis üveges fiolát nyom a markodba — <em>gyógyital (+4 ÉP bármikor felhasználható)</em>.`,
+    choices: [
+      { text: 'Elfogadod a küldetést és elindulsz déli irányba', next: 'road_south' },
+      { text: 'Visszatérsz a fogadóba és elmondod amit hallottál', next: 'tavern' }
+    ],
+    giveItem: 'Gyógyital (+4 ÉP)'
+  },
+  {
+    id: 'road_north',
+    text: `Az északi út egy szélesebb kereskedelmi útra vezet. Néhány nap járás múlva elérsz egy kis városba — Medervárosba —, ahol egy komoly zsoldospiacon árulják a kalandok reményét.
+
+A piac egyik hirdetőtáblájára ragasztott lapot olvasol: <em>"Kerestetik: merész kalandor, aki visszaszerzi a Keleti Erőd elveszett kincsét. Jutalom: 50 arany!"</em>`,
+    choices: [
+      { text: 'Jelentkezz a küldetésre', next: 'fort_quest' },
+      { text: 'Vásárolj felszerelést (2 AT)', next: 'shop', gold: -2 },
+      { text: 'Visszatérsz déli irányba', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'road_south',
+    text: `A déli út kanyarog az erdők közt. Estére egy sötét sziklafalnál állsz meg — a barlang bejárata előtted tátong.
+
+Belülről csontok csörömpölnek és valami erős büdösség terjeng. Ez az Ork-barlang.
+
+Belülről zajt hallasz — egy csoportnyi Orkot, akik hangosan civakodnak valami felett.`,
+    choices: [
+      { text: '⚔ Megtámadod az első Orkot a bejáratnál', next: 'fight_orc2', startCombat: { name: 'Ork Őr', ugy: 8, elet: 12, armor: 'bőr', weapon: 'fejsze', xp: 25, gold: { min: 2, max: 4 } } },
+      { text: 'Megpróbálsz lopakodva bemászni (Lopakodás)', next: 'cave_sneak', skillCheck: { skill: 'Lopakodás', difficulty: 12 } },
+      { text: 'Visszafordulsz', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'fight_orc2',
+    text: `Az Ork Őr megfordul és meglát! Harci kiáltással rátámad!`,
+    isCombatNode: true
+  },
+  {
+    id: 'cave_sneak',
+    text: 'KÉPZETTSÉGPRÓBA: LOPAKODÁS',
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Csendben beosontál a barlangba. Az Orkok egy tűz körül ülnek és vitáznak egy fényes, kristályos tárgy fölött... Ez az Élet Kristálya! De az egyik Ork hirtelen felemeli a fejét.`,
+      choices: [
+        { text: '⚔ Lecsapsz rájuk meglepetésszerűen!', next: 'fight_orc2', startCombat: { name: 'Ork Vezér', ugy: 9, elet: 15, armor: 'bőr', weapon: 'kard', xp: 40, gold: { min: 5, max: 8 } } }
+      ]
+    },
+    onFail: {
+      text: `Egy követ megmozdítasz, és az Orkok mind feléd fordulnak!`,
+      choices: [
+        { text: '⚔ Harcolj meg az Ork Őrrel!', next: 'fight_orc2', startCombat: { name: 'Ork Vezér', ugy: 9, elet: 15, armor: 'bőr', weapon: 'fejsze', xp: 40, gold: { min: 4, max: 7 } } }
+      ]
+    }
+  },
+  {
+    id: 'sign_inspect',
+    text: 'KÉPZETTSÉGPRÓBA: ÉSZLELÉS',
+    isSkillCheck: true,
+    onSuccess: {
+      text: `A táblát közelebbről nézve egy friss karcolást fedez fel az alján: <em>"Vigyázz az erdőben — Orkok"</em>. Valaki nemrég figyelmeztette az arra járókat!`,
+      choices: [
+        { text: 'A fogadó felé tartasz', next: 'tavern' },
+        { text: 'Mégis az erdőt vizsgálod meg, de óvatosan', next: 'forest_entry' }
+      ]
+    },
+    onFail: {
+      text: `A tábla semmit sem árul el különöset. Csak egy kopott irányjelző.`,
+      choices: [
+        { text: 'A fogadóba tartasz', next: 'tavern' },
+        { text: 'Az erdőbe indulsz', next: 'forest_entry' }
+      ]
+    }
+  },
+  {
+    id: 'merchant_inspect',
+    text: 'KÉPZETTSÉGPRÓBA: ÉSZLELÉS',
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Jobban megnézve a kereskedőt, észreveszed hogy az egyik gyűrűjén a Tolvajok Céhének titkos jele van! Ez az ember nem az, aminek mutatja magát.`,
+      choices: [
+        { text: 'Szembesítsd a kereskedőt a felfedezéssel', next: 'merchant_confronted' },
+        { text: 'Úgy teszel mintha nem vettél volna észre semmit és visszautasítod', next: 'tavern' }
+      ]
+    },
+    onFail: {
+      text: `Nem találsz semmi gyanúsat. A kereskedő egyszerűnek tűnik, bár valóban gazdagnak.`,
+      choices: [
+        { text: 'Elvállalod a munkát', next: 'merchant_escort' },
+        { text: 'Visszautasítod', next: 'tavern' }
+      ]
+    }
+  },
+  {
+    id: 'merchant_confronted',
+    text: `A kereskedő egy pillanatra merevvé válik, majd mosolyog. "Jó szemű vagy, kalandor. Igen, kapcsolatban vagyok a Céhhel — de ez nem jelent semmi rosszat. Az árú amivel kereskedem... különleges természetű. Ezért kell testőr. Dupla bért ajánlok: 6 aranytallér naponta."`,
+    choices: [
+      { text: 'Elfogadod az ajánlatot', next: 'merchant_escort' },
+      { text: 'Visszautasítod', next: 'tavern' }
+    ]
+  },
+  {
+    id: 'merchant_escort',
+    text: `A kereskedővel együtt elindultok. Útközben csattognak a szekér kerekei és a kereskedő folyton idegeskedik. Alkonyatkor egy szoros völgybe értek...
+
+Hirtelen nyilak süvítenek a sziklák közül! Rablók! A kereskedő sikít és elugrik a szekérről!`,
+    choices: [
+      { text: '⚔ Megvéded a szekeret az első rablótól!', next: 'fight_bandit', startCombat: { name: 'Útonálló', ugy: 8, elet: 8, armor: 'semmi', weapon: 'kard', xp: 15, gold: { min: 1, max: 3 } } },
+      { text: 'Elmenekülsz', next: 'tavern', gold: -2 }
+    ]
+  },
+  {
+    id: 'fight_bandit',
+    text: `Az útonálló rád vet magát pengéjével!`,
+    isCombatNode: true
+  },
+  {
+    id: 'shop',
+    text: `A városi kereskedőnél különféle felszerelések kaphatóak. Végigjárod az állványokat.
+
+<em>Jelenlegi aranyaid: [GOLD] AT</em>
+
+Különleges árúk:
+• Gyógyital (+4 ÉP) — 3 AT
+• Jobb kard (+1 sebzés) — 5 AT  
+• Bőrpáncél — 4 AT`,
+    choices: [
+      { text: 'Megveszed a Gyógyitalt (3 AT)', next: 'shop_bought', gold: -3, giveItem: 'Gyógyital (+4 ÉP)' },
+      { text: 'Továbbutazol', next: 'road_north' }
+    ]
+  },
+  {
+    id: 'shop_bought',
+    text: `Megvásároltad amit szerettél volna. A kereskedő mosolyog. "Szerencsés kalandokat kívánok!"`,
+    choices: [
+      { text: 'Folytatsz', next: 'road_north' }
+    ]
+  },
+  {
+    id: 'fort_quest',
+    text: `A küldetés kiadója egy marcona, hegforras arcú lovag — Sir Brandus. Elmagyarázza: az Éjszaka Démonai (Orkkal szövetséges bandita csapat) fosztotta ki a Keleti Erődöt, és elvitte a helyi kereskedők aranyát.
+
+"Ha visszahozod a ládát — és a banda fejét —, az 50 arany a tied. Ha csak a ládát, 30."`,
+    choices: [
+      { text: 'Elfogadod a teljes küldetést (50 AT)', next: 'fort_start' },
+      { text: 'Csak a láda kell (30 AT)', next: 'fort_start' },
+      { text: 'Visszautasítod', next: 'road_north' }
+    ]
+  },
+  {
+    id: 'fort_start',
+    text: `A romok közt futkároznak a bandita előőrsök. A erőd kapujánál egy magányos Bandita Őr ásít unalmában...`,
+    choices: [
+      { text: '⚔ Leüted az őrt!', next: 'fight_bandit2', startCombat: { name: 'Bandita Őr', ugy: 8, elet: 9, armor: 'bőr', weapon: 'kard', xp: 20, gold: { min: 2, max: 5 } } },
+      { text: 'Megkerülöd lopakodva (Lopakodás)', next: 'fort_sneak', skillCheck: { skill: 'Lopakodás', difficulty: 11 } }
+    ]
+  },
+  {
+    id: 'fight_bandit2',
+    text: `A Bandita Őr felkap a fegyveréhez!`,
+    isCombatNode: true
+  },
+  {
+    id: 'fort_sneak',
+    text: 'KÉPZETTSÉGPRÓBA: LOPAKODÁS',
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Csendben beosontál az erőd falain belülre. Az udvar közepén egy nagy, vastalt ládát látsz — ez az! De egy Nagy Bandita vigyáz rá...`,
+      choices: [
+        { text: '⚔ Megtámadod a Nagy Banditát!', next: 'fight_bandit2', startCombat: { name: 'Nagy Bandita', ugy: 9, elet: 13, armor: 'bőr', weapon: 'fejsze', xp: 35, gold: { min: 4, max: 8 } } }
+      ]
+    },
+    onFail: {
+      text: `Hangos csörömpöléssel fellármázod az őrség felét!`,
+      choices: [
+        { text: '⚔ Harcolj!', next: 'fight_bandit2', startCombat: { name: 'Bandita Őr', ugy: 8, elet: 9, armor: 'bőr', weapon: 'kard', xp: 20, gold: { min: 2, max: 4 } } }
+      ]
+    }
+  },
+  {
+    id: 'morning',
+    text: `Remekül aludtál! A fogadós reggelivel vár. Ma szép, napsütéses nap ígérkezik Allansiában.
+
+A fogadó táblájára valaki éjjel egy új lapot szögezett: <em>"Kerestetik tapasztalt kalandor a goblin-barlang megtisztítására. Jutalom: tapasztalat és zsákmány!"</em>`,
+    choices: [
+      { text: 'Megnézed a goblinbarlangot', next: 'goblin_cave' },
+      { text: 'Kiindulsz az erdőbe', next: 'forest_entry' },
+      { text: 'A város felé tartasz', next: 'road_north' }
+    ]
+  },
+  {
+    id: 'goblin_cave',
+    text: `A goblin-barlang egy nedves, büdös lyuk a hegyoldalban. Belülről sikoltozás és csörömpölés hallatszik.
+
+Az első kanyar mögött egy kisebb Goblin ugrik feléd vadállati üvöltéssel!`,
+    choices: [
+      { text: '⚔ Harcolj a Goblinnal!', next: 'fight_goblin', startCombat: { name: 'Goblin', ugy: 6, elet: 6, armor: 'semmi', weapon: 'kard', xp: 10, gold: { min: 0, max: 2 } } },
+      { text: 'Megpróbálsz kitérni (Kitérés)', next: 'goblin_dodge', skillCheck: { skill: 'Kitérés', difficulty: 10 } }
+    ]
+  },
+  {
+    id: 'goblin_dodge',
+    text: 'KÉPZETTSÉGPRÓBA: KITÉRÉS',
+    isSkillCheck: true,
+    onSuccess: {
+      text: `Ügyesen félreugrsz a Goblin csapása elől! A kis szörny belerohant a sziklafalba és elvesztette az eszméletét. Tovább hatolsz a barlangba.`,
+      choices: [
+        { text: 'Folytatod a barlangi kutatást', next: 'goblin_loot' }
+      ]
+    },
+    onFail: {
+      text: `Nem sikerül kitérnöd, a Goblin eltalál! Elveszítesz 2 ÉP-t.`,
+      choices: [
+        { text: '⚔ Most harcolj vissza!', next: 'fight_goblin', startCombat: { name: 'Goblin', ugy: 6, elet: 4, armor: 'semmi', weapon: 'kard', xp: 10, gold: { min: 0, max: 2 } }, dmg: 2 }
+      ]
+    }
+  },
+  {
+    id: 'fight_goblin',
+    text: `A Goblin vicsorgás erejével rád veti magát!`,
+    isCombatNode: true
+  },
+  {
+    id: 'goblin_loot',
+    text: `A barlang mélyén egy kis zsákmányt találsz — az Orkok régebbi rablásainak maradékát. Egy kis ládában néhány aranytallér és egy furcsa rúna-kövület.
+
+<em>Nyertél 3 aranytallért és 15 tapasztalati pontot!</em>`,
+    choices: [
+      { text: 'Visszatérsz a fogadóba', next: 'tavern', gold: 3, xp: 15 }
+    ]
+  }
+];
+
+// ==========================================
+// GAME STATE
+// ==========================================
+let hero = null;
+let gameState = {
+  currentNode: 'start',
+  inCombat: false,
+  enemy: null,
+  inventory: [],
+  pendingCombatNode: null,
+  pendingSkillNode: null,
+  log: []
+};
+
+// ==========================================
+// CHARACTER CREATION
+// ==========================================
+let charDraft = { ugy: 0, elet: 0, sze: 0, skills: {}, step: 1 };
+let allSkills = [];
+let skillAlloc = {};
+
+function goToStep2() {
+  const name = document.getElementById('hero-name').value.trim();
+  if (!name) { notify('Add meg a hős nevét!', 'danger'); return; }
+  charDraft.name = name;
+  charDraft.gender = document.getElementById('hero-gender').value;
+  charDraft.race = document.getElementById('hero-race').value;
+  charDraft.heroClass = document.getElementById('hero-class').value;
+
+  // Show race bonus
+  const raceInfo = document.getElementById('race-bonus-info');
+  const rb = RACE_BONUSES[charDraft.race];
+  if (rb && rb.info) {
+    raceInfo.innerHTML = `<strong>Faj módosító:</strong> ${rb.info}`;
+    raceInfo.style.display = 'block';
+  } else {
+    raceInfo.style.display = 'none';
+  }
+
+  document.getElementById('step-1').style.display = 'none';
+  document.getElementById('step-2').style.display = 'block';
+  charDraft.ugy = 0; charDraft.elet = 0; charDraft.sze = 0;
+  document.getElementById('roll-ugy').textContent = '—';
+  document.getElementById('roll-elet').textContent = '—';
+  document.getElementById('roll-sze').textContent = '—';
+  document.getElementById('to-step3-btn').disabled = true;
+}
+
+function goToStep1() {
+  document.getElementById('step-1').style.display = 'block';
+  document.getElementById('step-2').style.display = 'none';
+}
+
+function rollStat(which, numDice, bonus) {
+  let total = bonus;
+  for (let i = 0; i < numDice; i++) total += Math.ceil(Math.random() * 6);
+  charDraft[which] = total;
+  document.getElementById('roll-' + which).textContent = total;
+  document.getElementById('roll-' + which).style.color = 'var(--blood)';
+  checkStep2Done();
+}
+
+function checkStep2Done() {
+  const done = charDraft.ugy > 0 && charDraft.elet > 0 && charDraft.sze > 0;
+  document.getElementById('to-step3-btn').disabled = !done;
+}
+
+function goToStep3() {
+  // Apply race bonuses
+  const rb = RACE_BONUSES[charDraft.race] || {};
+  charDraft.finalUgy = charDraft.ugy + (rb.ugy || 0);
+  charDraft.finalElet = charDraft.elet + (rb.elet || 0);
+  charDraft.finalSze = charDraft.sze + (rb.sze || 0);
+
+  // Build skills list
+  allSkills = [];
+  for (const cat in SKILLS_LIST) allSkills = allSkills.concat(SKILLS_LIST[cat]);
+  allSkills = [...new Set(allSkills)].sort();
+
+  skillAlloc = {};
+  allSkills.forEach(s => skillAlloc[s] = 0);
+
+  // Give class bonus
+  const classBonus = CLASS_BONUS_SKILLS[charDraft.heroClass] || [];
+  classBonus.forEach(s => { if (skillAlloc[s] !== undefined) skillAlloc[s] = Math.min(2, skillAlloc[s] + 2); });
+
+  charDraft.totalPts = charDraft.finalUgy;
+
+  document.getElementById('step-2').style.display = 'none';
+  document.getElementById('step-3').style.display = 'block';
+  renderSkillsAlloc();
+}
+
+function goToStep2Back() {
+  document.getElementById('step-2').style.display = 'block';
+  document.getElementById('step-3').style.display = 'none';
+}
+
+function getUsedPts() {
+  return Object.values(skillAlloc).reduce((a, b) => a + b, 0);
+}
+
+function renderSkillsAlloc() {
+  const used = getUsedPts();
+  const rem = charDraft.totalPts - used;
+  document.getElementById('pts-left').textContent = rem;
+  document.getElementById('pts-remaining').style.color = rem <= 0 ? 'var(--blood)' : 'var(--emerald)';
+
+  const container = document.getElementById('skills-list-alloc');
+  container.innerHTML = '';
+  allSkills.forEach(s => {
+    const pts = skillAlloc[s];
+    const finalVal = charDraft.finalUgy + pts;
+    const div = document.createElement('div');
+    div.className = 'skill-alloc';
+    div.innerHTML = `
+      <span class="skill-alloc-name">${s} <span style="color:var(--copper); font-size:0.8rem;">(${finalVal})</span></span>
+      <div class="skill-alloc-controls">
+        <div class="skill-btn" onclick="changeSkill('${s}', -1)">−</div>
+        <div class="skill-pts-display">${pts}</div>
+        <div class="skill-btn" onclick="changeSkill('${s}', 1)">+</div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function changeSkill(skill, delta) {
+  const cur = skillAlloc[skill];
+  const used = getUsedPts();
+  const rem = charDraft.totalPts - used;
+  if (delta > 0 && (rem <= 0 || cur >= 4)) return;
+  if (delta < 0 && cur <= 0) return;
+  skillAlloc[skill] = cur + delta;
+  renderSkillsAlloc();
+}
+
+function goToStep4() {
+  charDraft.skills = { ...skillAlloc };
+  document.getElementById('step-3').style.display = 'none';
+  document.getElementById('step-4').style.display = 'block';
+  const gold = Math.ceil(Math.random() * 6);
+  charDraft.startGold = gold;
+  document.getElementById('start-gold').textContent = gold;
+}
+
+function goToStep3Back() {
+  document.getElementById('step-3').style.display = 'block';
+  document.getElementById('step-4').style.display = 'none';
+}
+
+function finalizeCharacter() {
+  const weapon = document.getElementById('start-weapon').value;
+  const bg = document.getElementById('hero-bg').value;
+
+  hero = {
+    name: charDraft.name,
+    gender: charDraft.gender,
+    race: charDraft.race,
+    heroClass: charDraft.heroClass,
+    ugy: charDraft.finalUgy,
+    ugyMax: charDraft.finalUgy,
+    elet: charDraft.finalElet,
+    eletMax: charDraft.finalElet,
+    sze: charDraft.finalSze,
+    sze: charDraft.finalSze,
+    szeMax: charDraft.finalSze,
+    skills: charDraft.skills,
+    weapon: weapon,
+    armor: 'bőr',
+    gold: charDraft.startGold,
+    xp: 0,
+    inventory: ['Hátizsák', 'Élelem (1d6 nap)', bg ? 'Napló' : ''].filter(Boolean),
+    background: bg
+  };
+
+  gameState = { currentNode: 'start', inCombat: false, enemy: null, inventory: [...hero.inventory], log: [] };
+
+  showScreen('screen-game');
+  updateCharSheet();
+  loadNode('start');
+  addLog('Kalandra fel! A hős útja elkezdődött.', 'system');
+}
+
+// ==========================================
+// GAME LOGIC
+// ==========================================
+function getNode(id) {
+  return ADVENTURES.find(a => a.id === id);
+}
+
+function loadNode(id) {
+  gameState.currentNode = id;
+  const node = getNode(id);
+  if (!node) { document.getElementById('adventure-text').innerHTML = '<em>Az út itt elvész...</em>'; return; }
+
+  // Handle combat node
+  if (node.isCombatNode) {
+    const prevNode = getNode(gameState.pendingCombatNode || id);
+    // find the choice that led here
+    document.getElementById('adventure-text').innerHTML = node.text;
+    document.getElementById('choices-container').innerHTML = '';
+    return;
+  }
+
+  // Handle skill check
+  if (node.isSkillCheck) {
+    processSkillCheck(node);
+    return;
+  }
+
+  // Apply instant effects
+  let effectText = '';
+  if (node.heal) { hero.elet = Math.min(hero.eletMax, hero.elet + node.heal); effectText += `<br><span style="color:var(--emerald)">+${node.heal} ÉLETERŐ visszakapva.</span>`; }
+  if (node.dmg) { hero.elet -= node.dmg; effectText += `<br><span style="color:var(--blood)">-${node.dmg} ÉLETERŐ elszenvedve.</span>`; }
+  if (node.gold) { hero.gold += node.gold; effectText += `<br><span style="color:var(--gold)">${node.gold > 0 ? '+' : ''}${node.gold} Aranytallér.</span>`; }
+  if (node.xp) { hero.xp += node.xp; effectText += `<br><span style="color:var(--copper)">+${node.xp} Tapasztalat.</span>`; }
+  if (node.giveItem) { hero.inventory.push(node.giveItem); effectText += `<br><span style="color:var(--emerald)">Megkaptad: ${node.giveItem}</span>`; }
+
+  if (effectText) addLog(effectText.replace(/<br>/g, ' | ').replace(/<[^>]+>/g, '').trim(), 'system');
+
+  updateCharSheet();
+  checkDeath();
+
+  let displayText = node.text;
+  if (displayText.includes('[GOLD]')) displayText = displayText.replace('[GOLD]', hero.gold);
+  document.getElementById('adventure-text').innerHTML = displayText + effectText;
+
+  // Render choices
+  const choicesDiv = document.getElementById('choices-container');
+  choicesDiv.innerHTML = '';
+  if (node.choices) {
+    node.choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      let label = choice.text;
+      if (choice.skillCheck) label += ` <span style="color:var(--copper); font-size:0.85rem;">[${choice.skillCheck.skill} ${choice.skillCheck.difficulty}+]</span>`;
+      btn.innerHTML = label;
+      btn.onclick = () => handleChoice(choice);
+      choicesDiv.appendChild(btn);
+    });
+  }
+}
+
+function handleChoice(choice) {
+  addLog(`> ${choice.text.replace(/<[^>]+>/g, '')}`, '');
+
+  if (choice.startCombat) {
+    startCombat(choice.startCombat, choice.next);
+    return;
+  }
+
+  if (choice.skillCheck) {
+    // Store the choice for skill check
+    const node = getNode(choice.next);
+    if (node && node.isSkillCheck) {
+      gameState.pendingSkillNode = choice;
+      loadNode(choice.next);
+      return;
+    }
+  }
+
+  loadNode(choice.next);
+}
+
+function processSkillCheck(node) {
+  const choice = gameState.pendingSkillNode;
+  if (!choice || !choice.skillCheck) {
+    loadNode('start');
+    return;
+  }
+
+  const sc = choice.skillCheck;
+  const skillVal = getSkillValue(sc.skill);
+  const roll = Math.ceil(Math.random() * 6) + Math.ceil(Math.random() * 6);
+  const success = roll <= skillVal;
+
+  addLog(`Képzettségpróba: ${sc.skill} (${skillVal}) — Dobás: ${roll} — ${success ? '✓ Siker!' : '✗ Kudarc!'}`, success ? 'success' : 'fail');
+
+  const resultNode = success ? node.onSuccess : node.onFail;
+  if (!resultNode) { loadNode('start'); return; }
+
+  const effectText = success
+    ? `<div style="color:var(--emerald); font-weight:600; margin-bottom:8px;">✓ SIKERES próba! (${roll} ≤ ${skillVal})</div>`
+    : `<div style="color:var(--blood); font-weight:600; margin-bottom:8px;">✗ SIKERTELEN próba! (${roll} > ${skillVal})</div>`;
+
+  document.getElementById('adventure-text').innerHTML = effectText + resultNode.text;
+
+  const choicesDiv = document.getElementById('choices-container');
+  choicesDiv.innerHTML = '';
+  if (resultNode.choices) {
+    resultNode.choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.text;
+      btn.onclick = () => handleChoice(c);
+      choicesDiv.appendChild(btn);
+    });
+  }
+}
+
+function getSkillValue(skillName) {
+  const pts = hero.skills[skillName] || 0;
+  return hero.ugy + pts;
+}
+
+// ==========================================
+// COMBAT SYSTEM
+// ==========================================
+function startCombat(enemyDef, afterNode) {
+  const goldDrop = enemyDef.gold ? enemyDef.gold.min + Math.floor(Math.random() * (enemyDef.gold.max - enemyDef.gold.min + 1)) : 0;
+  gameState.enemy = {
+    name: enemyDef.name,
+    ugy: enemyDef.ugy,
+    elet: enemyDef.elet,
+    eletMax: enemyDef.elet,
+    armor: enemyDef.armor || 'semmi',
+    weapon: enemyDef.weapon || 'kard',
+    xp: enemyDef.xp || 10,
+    gold: goldDrop
+  };
+  gameState.inCombat = true;
+  gameState.combatAfterNode = afterNode;
+  gameState.lastLuckUsed = false;
+
+  addLog(`⚔ Harc kezdődik: ${hero.name} vs ${gameState.enemy.name}!`, 'combat');
+
+  // Switch to combat tab
+  switchTab('tab-combat');
+  updateCombatUI();
+  document.getElementById('no-combat-msg').style.display = 'none';
+  document.getElementById('combat-area').style.display = 'block';
+
+  // Show in adventure tab too
+  const node = getNode(gameState.currentNode);
+  if (node) document.getElementById('adventure-text').innerHTML = node.text;
+  document.getElementById('choices-container').innerHTML = '';
+}
+
+function updateCombatUI() {
+  if (!gameState.enemy) return;
+  document.getElementById('fighter-hero-name').textContent = hero.name;
+  document.getElementById('fighter-hero-hp').textContent = `${hero.elet} / ${hero.eletMax} ÉP`;
+  document.getElementById('fighter-enemy-name').textContent = gameState.enemy.name;
+  document.getElementById('fighter-enemy-hp').textContent = `${gameState.enemy.elet} / ${gameState.enemy.eletMax} ÉP`;
+  updateCharSheet();
+}
+
+function rollDie() { return Math.ceil(Math.random() * 6); }
+
+function getDamage(weapon, roll) {
+  const table = WEAPON_DAMAGE[weapon] || WEAPON_DAMAGE.kard;
+  return table[Math.min(roll - 1, table.length - 1)];
+}
+
+function getArmor(armor, roll) {
+  const table = ARMOR_PROTECTION[armor] || ARMOR_PROTECTION.semmi;
+  return table[Math.min(roll - 1, table.length - 1)];
+}
+
+function doAttack() {
+  if (!gameState.inCombat || !gameState.enemy) return;
+
+  const enemy = gameState.enemy;
+  const heroWeaponSkill = getSkillValue(hero.weapon.charAt(0).toUpperCase() + hero.weapon.slice(1));
+  const heroWeaponFinal = hero.ugy + (hero.skills[hero.weapon] || 0);
+
+  // Hero rolls
+  const h1 = rollDie(), h2 = rollDie();
+  const heroAttack = h1 + h2 + heroWeaponFinal;
+  const heroCritical = h1 === 6 && h2 === 6;
+  const heroBotch = h1 === 1 && h2 === 1;
+
+  // Enemy rolls
+  const e1 = rollDie(), e2 = rollDie();
+  const enemyAttack = e1 + e2 + enemy.ugy;
+  const enemyCritical = e1 === 6 && e2 === 6;
+  const enemyBotch = e1 === 1 && e2 === 1;
+
+  // Animate dice
+  animateDice([h1, h2, e1, e2]);
+
+  let resultMsg = '';
+
+  // Check Nagy Csapás / Balsiker
+  if (heroCritical && heroAttack >= enemyAttack * 2) {
+    enemy.elet = -1;
+    resultMsg = '💀 NAGY CSAPÁS! Az ellenfél azonnal szörnyethal!';
+    addLog(resultMsg, 'special');
+    endCombat(true);
+    return;
+  }
+
+  if (enemyCritical && enemyAttack >= heroAttack * 2) {
+    hero.elet = -1;
+    resultMsg = '💀 NAGY CSAPÁS! Az ellenség halálos csapást mér rád!';
+    addLog(resultMsg, 'special');
+    updateCombatUI();
+    checkDeath();
+    return;
+  }
+
+  if (heroBotch) {
+    // Balsiker for hero
+    const mishap = rollBalsiker();
+    resultMsg = `⚠ BALSIKER! ${mishap}`;
+    addLog(resultMsg, 'fail');
+    document.getElementById('combat-result').textContent = resultMsg;
+    return;
+  }
+
+  if (heroAttack > enemyAttack) {
+    // Hero hits
+    const dmgRoll = rollDie();
+    const rawDmg = getDamage(hero.weapon, dmgRoll);
+    const armorRoll = rollDie();
+    const armorAbsorb = getArmor(enemy.armor, armorRoll);
+    const finalDmg = Math.max(0, rawDmg - armorAbsorb);
+    enemy.elet -= finalDmg;
+    resultMsg = `✓ Találat! (${h1}+${h2}+${heroWeaponFinal}=${heroAttack} vs ${e1}+${e2}+${enemy.ugy}=${enemyAttack}) — Sebzés: ${finalDmg} ÉP`;
+    addLog(resultMsg, 'success');
+    if (enemy.elet <= 0) {
+      endCombat(true);
+      return;
+    }
+  } else if (enemyAttack > heroAttack) {
+    // Enemy hits
+    const dmgRoll = rollDie();
+    const rawDmg = getDamage(enemy.weapon, dmgRoll);
+    const armorRoll = rollDie();
+    const armorAbsorb = getArmor(hero.armor, armorRoll);
+    const finalDmg = Math.max(0, rawDmg - armorAbsorb);
+    hero.elet -= finalDmg;
+    resultMsg = `✗ Találat kaptál! (${h1}+${h2}+${heroWeaponFinal}=${heroAttack} vs ${e1}+${e2}+${enemy.ugy}=${enemyAttack}) — Sérülés: ${finalDmg} ÉP`;
+    addLog(resultMsg, 'combat');
+    checkDeath();
+  } else {
+    resultMsg = `= Kivédik egymás csapását! (${heroAttack} vs ${enemyAttack})`;
+    addLog(resultMsg, '');
+  }
+
+  document.getElementById('combat-result').textContent = resultMsg;
+  updateCombatUI();
+}
+
+function rollBalsiker() {
+  const r = Math.ceil(Math.random() * 6) + Math.ceil(Math.random() * 6);
+  const mishaps = {
+    2: 'Társadat sebesíted meg (vagy magadat)! Duplán sebzel.',
+    3: 'Magadat sebesíted meg! Elveszítesz 2 ÉP-t.',
+    4: 'Nem védekezol! Az ellenfél duplán sebez.',
+    5: 'Pofára esel! Két körre -4 a Támadásodra.',
+    6: 'Eldobod a fegyvered! Két körig nem tudsz támadni.',
+    7: 'Megcsúszol, elveszted egyensúlyodat. Következő körben -2.',
+    8: 'Elesél! Egy teljes körbe kerül talpraállnod.',
+    9: 'A fegyvered messzire repül! Nem tudod felvenni.',
+    10: 'Védtelent válsz. Az ellenfél +2-vel támad.',
+    11: 'Magadat sebesíted. Sebzés normál.',
+    12: 'Magadat sebesíted meg kétszeres sebzéssel!'
+  };
+  const msg = mishaps[r] || 'Balsiker! Valami kellemetlen dolog történik.';
+  if (r === 3 || r === 11) { hero.elet -= 2; updateCombatUI(); updateCharSheet(); }
+  if (r === 12) { hero.elet -= 4; updateCombatUI(); updateCharSheet(); }
+  return msg;
+}
+
+function useLuckInCombat() {
+  if (hero.sze <= 0) { notify('Nincs több szerencséd!', 'danger'); return; }
+  const roll = rollDie() + rollDie();
+  const success = roll <= hero.sze;
+  hero.sze--;
+  if (success) {
+    addLog(`🍀 Szerencse a harcban! (${roll} ≤ ${hero.sze + 1}) — Következő sebzés +1!`, 'success');
+    gameState.luckBonus = 1;
+    notify('Szerencsés vagy! +1 sebzés a következő találatnál.', 'success');
+  } else {
+    addLog(`🍀 Szerencsétlenség! (${roll} > ${hero.sze + 1}) — Következő sérülés +1!`, 'fail');
+    notify('Balszerencsés vagy! +1 sérülés ha találnak.', 'danger');
+  }
+  updateCharSheet();
+}
+
+function fleeCombat() {
+  hero.elet = Math.max(1, hero.elet - 2);
+  gameState.inCombat = false;
+  gameState.enemy = null;
+  document.getElementById('combat-area').style.display = 'none';
+  document.getElementById('no-combat-msg').style.display = 'block';
+  addLog('💨 Menekülés! Elveszítettél 2 ÉP-t a sietős visszavonulásban.', 'fail');
+  updateCharSheet();
+  switchTab('tab-adventure');
+  loadNode('tavern');
+}
+
+function endCombat(victory) {
+  const enemy = gameState.enemy;
+  gameState.inCombat = false;
+
+  if (victory) {
+    hero.xp += enemy.xp;
+    hero.gold += enemy.gold;
+    addLog(`🏆 Győzelem! Legyőzted: ${enemy.name}. +${enemy.xp} TP, +${enemy.gold} AT`, 'success');
+    notify(`Győzelem! +${enemy.xp} TP, +${enemy.gold} AT`, 'success');
+    updateCharSheet();
+    updateCombatUI();
+
+    setTimeout(() => {
+      document.getElementById('combat-area').style.display = 'none';
+      document.getElementById('no-combat-msg').style.display = 'block';
+      switchTab('tab-adventure');
+      // Find victory node
+      const afterId = gameState.combatAfterNode;
+      // Map fight nodes to victory nodes
+      const victoryMap = {
+        'fight_orc': 'orc_victory',
+        'fight_orc2': 'orc_victory',
+        'fight_goblin': 'goblin_loot',
+        'fight_bandit': 'merchant_escort',
+        'fight_bandit2': 'fort_quest'
+      };
+      const victoryNode = victoryMap[gameState.currentNode] || afterId || 'tavern';
+      loadNode(victoryNode);
+    }, 1500);
+  }
+
+  gameState.enemy = null;
+}
+
+function animateDice(vals) {
+  const ids = ['die1', 'die2', 'die3', 'die4'];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.add('rolling');
+    setTimeout(() => {
+      el.textContent = vals[i];
+      el.classList.remove('rolling');
+    }, 600);
+  });
+}
+
+// ==========================================
+// CHARACTER SHEET
+// ==========================================
+function updateCharSheet() {
+  if (!hero) return;
+  document.getElementById('topbar-hero').textContent = hero.name;
+  document.getElementById('char-name-display').textContent = hero.name;
+  document.getElementById('char-info-display').textContent = `${hero.race.charAt(0).toUpperCase() + hero.race.slice(1)} ${hero.heroClass}`;
+
+  document.getElementById('stat-ugy').textContent = hero.ugy;
+  document.getElementById('stat-ugy-max').textContent = `/${hero.ugyMax}`;
+  document.getElementById('stat-elet').textContent = hero.elet;
+  document.getElementById('stat-elet-max').textContent = `/${hero.eletMax}`;
+  document.getElementById('stat-sze').textContent = hero.sze;
+  document.getElementById('stat-sze-max').textContent = `/${hero.szeMax}`;
+
+  const hpPct = Math.max(0, (hero.elet / hero.eletMax) * 100);
+  document.getElementById('hp-bar').style.width = hpPct + '%';
+
+  document.getElementById('gold-display').textContent = hero.gold;
+  document.getElementById('xp-display').textContent = hero.xp;
+
+  // Equipment
+  document.getElementById('equip-display').innerHTML =
+    `🗡 ${hero.weapon.charAt(0).toUpperCase() + hero.weapon.slice(1)}<br>🛡 ${hero.armor.charAt(0).toUpperCase() + hero.armor.slice(1)}<br>` +
+    hero.inventory.slice(0, 4).map(i => `📦 ${i}`).join('<br>');
+
+  // Skills
+  const skillsDiv = document.getElementById('skills-display');
+  skillsDiv.innerHTML = '';
+  const relevantSkills = Object.entries(hero.skills).filter(([k, v]) => v > 0);
+  if (relevantSkills.length === 0) {
+    skillsDiv.innerHTML = '<div style="color:var(--copper); font-style:italic; font-size:0.85rem; padding:4px;">Nincs képzettséged</div>';
+  } else {
+    relevantSkills.forEach(([skill, pts]) => {
+      const val = hero.ugy + pts;
+      skillsDiv.innerHTML += `<div class="skill-item"><span>${skill}</span><span class="skill-val">${val}</span></div>`;
+    });
+  }
+}
+
+function useLuck() {
+  if (hero.sze <= 0) { notify('Nincs több szerencséd!', 'danger'); return; }
+  const roll = rollDie() + rollDie();
+  const success = roll <= hero.sze;
+  hero.sze--;
+  updateCharSheet();
+  if (success) {
+    addLog(`🍀 Szerencsepróba: ${roll} ≤ ${hero.sze + 1} — SIKERES! (-1 SZERENCSE)`, 'success');
+    notify('Sikeres Szerencsepróba!', 'success');
+  } else {
+    addLog(`🍀 Szerencsepróba: ${roll} > ${hero.sze + 1} — SIKERTELEN! (-1 SZERENCSE)`, 'fail');
+    notify('Sikertelen Szerencsepróba!', 'danger');
+  }
+}
+
+function restHero() {
+  if (hero.elet >= hero.eletMax) { notify('Teljes az életerőd!', ''); return; }
+  hero.elet = Math.min(hero.eletMax, hero.elet + 2);
+  addLog('💤 Rövid pihenő — +2 ÉLETERŐ visszakapva.', 'system');
+  updateCharSheet();
+  notify('+2 ÉLETERŐ visszakapva.', 'success');
+}
+
+function checkDeath() {
+  if (!hero) return;
+  if (hero.elet <= -2) {
+    addLog('💀 A HŐS MEGHALT! A kaland véget ér.', 'combat');
+    notify('A HŐSÖD MEGHALT!', 'danger');
+    document.getElementById('choices-container').innerHTML =
+      '<button class="btn btn-gold" onclick="showScreen(\'screen-title\')">Új kaland kezdése</button>';
+    document.getElementById('adventure-text').innerHTML = `
+      <div style="text-align:center; padding:20px;">
+        <div style="font-size:2rem; margin-bottom:10px;">💀</div>
+        <strong style="font-family:'Cinzel',serif; color:var(--blood);">A HŐSÖD MEGHALT!</strong>
+        <p style="margin-top:10px; font-style:italic;">${hero.name} utolsó leheletét adta Titán veszélyes útjain.<br>Emléke megmarad a kalandozók énekeiben.</p>
+        <div style="margin-top:10px; color:var(--copper);">Szerzett Tapasztalat: ${hero.xp} TP</div>
+      </div>`;
+    document.getElementById('combat-area').style.display = 'none';
+    gameState.inCombat = false;
+  } else if (hero.elet <= 0) {
+    addLog('😵 ESZMÉLETLENSÉG! Az életerő nullára csökkent.', 'fail');
+    notify('Eszméletlenség! Az életerő nullára csökkent.', 'danger');
+  }
+}
+
+// ==========================================
+// LOG
+// ==========================================
+function addLog(msg, type) {
+  const log = document.getElementById('game-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry' + (type ? ' log-' + type : '');
+  const time = new Date().toLocaleTimeString('hu', {hour:'2-digit', minute:'2-digit'});
+  entry.innerHTML = `<span style="color:var(--copper); font-size:0.75rem;">[${time}]</span> ${msg}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  gameState.log.push({ msg, type, time });
+}
+
+function clearLog() {
+  document.getElementById('game-log').innerHTML = '';
+  gameState.log = [];
+}
+
+// ==========================================
+// UI HELPERS
+// ==========================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Reset create form
+  if (id === 'screen-create') {
+    document.getElementById('step-1').style.display = 'block';
+    document.getElementById('step-2').style.display = 'none';
+    document.getElementById('step-3').style.display = 'none';
+    document.getElementById('step-4').style.display = 'none';
+  }
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = ['tab-adventure','tab-combat','tab-log','tab-rules'].indexOf(id);
+  document.querySelectorAll('.tab')[idx]?.classList.add('active');
+}
+
+function notify(msg, type) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.className = 'notification' + (type ? ' ' + type : '');
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function confirmMainMenu() {
+  if (confirm('Visszatérsz a főmenübe? A jelenlegi játékállás elvész.')) {
+    showScreen('screen-title');
+  }
+}
+</script>
+</body>
+</html>
